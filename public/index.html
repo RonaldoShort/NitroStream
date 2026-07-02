@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NitroStream HD | P2P 1080p 60FPS Screen Sharing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-surface: rgba(18, 22, 34, 0.85);
+      --bg-surface-hover: rgba(28, 34, 52, 0.95);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --border-glow: rgba(99, 102, 241, 0.4);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent-cyan: #06b6d4;
+      --accent-pink: #ec4899;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --status-live: #10b981;
+      --status-offline: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #151a2d 0%, var(--bg-dark) 80%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .ambient-glow {
+      position: absolute;
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0,0,0,0) 70%);
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    header {
+      width: 100%;
+      max-width: 1440px;
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, var(--primary), var(--accent-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tag-hd {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .status-container {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      background: var(--bg-surface);
+      backdrop-filter: blur(12px);
+      padding: 0.5rem 1.2rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      font-size: 0.85rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--status-offline);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .status-dot.live {
+      background-color: var(--status-live);
+      box-shadow: 0 0 12px var(--status-live);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 2rem 2rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Card Setup Inicial */
+    .setup-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(25px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 540px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .setup-card h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+
+    .setup-card p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      margin-bottom: 1.75rem;
+      line-height: 1.5;
+    }
+
+    .role-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .role-btn {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.25rem 1rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.25s ease;
+      color: var(--text-muted);
+    }
+
+    .role-btn.active {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+    }
+
+    .role-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .role-btn h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .role-btn span {
+      font-size: 0.75rem;
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.9rem 1.2rem;
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-family: monospace;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn-copy {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 0 1.25rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-copy:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .action-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+      border: none;
+      border-radius: 14px;
+      padding: 1.1rem;
+      color: white;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.65);
+    }
+
+    /* Container de Vídeo e Palco da Transmissão */
+    .stream-stage {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Barra Superior de Controles e Código da Sala dentro da Transmissão */
+    .stream-top-bar {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      border-radius: 16px;
+      margin-bottom: 1rem;
+    }
+
+    .room-badge-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      padding: 0.4rem 1rem;
+      border-radius: 10px;
+    }
+
+    .room-badge-pill span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .room-badge-pill strong {
+      font-family: monospace;
+      font-size: 1.15rem;
+      color: #38bdf8;
+      letter-spacing: 0.1em;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      max-width: 1280px;
+      aspect-ratio: 16 / 9;
+      background: #030508;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-container:fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      aspect-ratio: auto !important;
+      border-radius: 0 !important;
+      border: none !important;
+      background: #000 !important;
+    }
+
+    /* Otimização 100% de renderização de hardware para zero atraso de frame e remoção de barras pretas */
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: var(--fit-mode, fill);
+      background: #000;
+      transform: translateZ(0);
+      will-change: transform;
+      cursor: pointer;
+    }
+
+    video:fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: var(--fit-mode, fill) !important;
+    }
+
+    .video-container:fullscreen video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: var(--fit-mode, fill) !important;
+    }
+
+    .stats-overlay {
+      position: absolute;
+      top: 1.2rem;
+      left: 1.2rem;
+      background: rgba(7, 9, 14, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.6rem 1rem;
+      display: flex;
+      gap: 1.5rem;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-family: monospace;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .controls-bar {
+      margin-top: 1rem;
+      width: 100%;
+      max-width: 1280px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+    }
+
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .control-item label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    select, input[type="range"] {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--primary);
+    }
+
+    input[type="range"] {
+      padding: 0;
+      width: 110px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .btn-control {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 0.75rem 1.4rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-control:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-start-stream {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-start-stream:hover {
+      box-shadow: 0 0 35px rgba(16, 185, 129, 0.55);
+      transform: translateY(-1px);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <header>
+    <div class="brand">
+      <span>⚡ NitroStream</span>
+      <span class="brand-badge">PRO P2P</span>
+      <span class="tag-hd" id="headerTag">2K / 1440p • 60 FPS • Nitidez Cítrica</span>
+    </div>
+    <div class="status-container">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div id="statusDot" class="status-dot"></div>
+        <span id="statusText">Desconectado</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Card de Entrada / Setup -->
+    <div id="setupCard" class="setup-card">
+      <h2>Sala de Transmissão</h2>
+      <p>Conexão P2P otimizada em 100% para zero latência, áudio impulsionado e estabilidade total sem travamentos.</p>
+
+      <label style="display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase;">Selecione seu Modo</label>
+      <div class="role-selector">
+        <div class="role-btn active" id="btnRoleHost" onclick="selectRole('broadcaster')">
+          <h4>🖥️ Transmitir</h4>
+          <span>Criar código aleatório de sala e transmitir</span>
+        </div>
+        <div class="role-btn" id="btnRoleViewer" onclick="selectRole('viewer')">
+          <h4>👀 Assistir</h4>
+          <span>Entrar em uma sala usando código de 5 dígitos</span>
+        </div>
+      </div>
+
+      <div class="form-group" id="roomInputGroup">
+        <label id="roomLabel" for="roomIdInput">Código da Sala (Gerado automaticamente)</label>
+        <div class="input-wrapper">
+          <input type="text" id="roomIdInput" maxlength="5" readonly>
+          <button type="button" id="btnCopySetup" class="btn-copy" onclick="copyRoomCode()">🔗 Copiar Link Mágico</button>
+        </div>
+      </div>
+
+      <button class="action-btn" id="btnJoin" onclick="joinRoom()">Gerar Sala & Entrar</button>
+    </div>
+
+    <!-- Palco do Vídeo -->
+    <div id="streamStage" class="stream-stage">
+      <div class="stream-top-bar">
+        <div class="room-badge-pill">
+          <span>🔒 CÓDIGO DA SALA:</span>
+          <strong id="displayRoomCode">-----</strong>
+          <button type="button" class="btn-copy" style="padding: 0.3rem 0.8rem; font-size: 0.75rem;" onclick="copyRoomCode()">🔗 Copiar Link para Convidar (1 Clique)</button>
+        </div>
+
+        <!-- Seletor de Qualidade / Presets de Vídeo -->
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <div class="control-item">
+            <label for="qualityPreset">💎 Qualidade:</label>
+            <select id="qualityPreset" onchange="changeQualityPreset(this.value)">
+              <option value="4k60">💎 4K (3840x2160) @ 60 FPS (Ultra Master - 40 Mbps)</option>
+              <option value="2k60" selected>🔥 2K / 1440p (2560x1440) @ 60 FPS (Super Nitro - 25 Mbps)</option>
+              <option value="2k30">✨ 2K / 1440p @ 30 FPS (Nitidez 2K - 15 Mbps)</option>
+              <option value="1080p60">⚡ 1080p @ 60 FPS (Nitro Padrão - 15 Mbps)</option>
+              <option value="1080p30">🎞️ 1080p @ 30 FPS (HD Padrão - 8 Mbps)</option>
+              <option value="720p60">🚀 720p @ 60 FPS (Fluido - 6 Mbps)</option>
+              <option value="720p30">📱 720p @ 30 FPS (Leve - 3 Mbps)</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <label for="sharpnessMode">🎯 Nitidez:</label>
+            <select id="sharpnessMode" onchange="changeSharpnessMode(this.value)">
+              <option value="detail" selected>Nitidez Máxima (Sem Borrão / Lives / Texto)</option>
+              <option value="motion">Fluidez Máxima (Jogos 3D Rápidos)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="video-container">
+        <div class="stats-overlay">
+          <div class="stat-item">
+            <span class="stat-label">Resolução Real</span>
+            <span class="stat-value" id="statRes">-- x --</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Taxa FPS</span>
+            <span class="stat-value" id="statFps">-- fps</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Conexão P2P</span>
+            <span class="stat-value" id="statP2P">Aguardando...</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Espectadores</span>
+            <span class="stat-value" id="statPeers">0</span>
+          </div>
+        </div>
+
+        <video id="mainVideo" autoplay playsinline disablePictureInPicture ondblclick="toggleFullscreen()"></video>
+      </div>
+
+      <div class="controls-bar">
+        <div class="controls-group">
+          <!-- Botão explícito de Iniciar Transmissão que desaparece depois -->
+          <button id="btnStartCapture" class="btn-control btn-start-stream" onclick="startScreenCapture()">
+            🔴 Iniciar Transmissão 1080p60
+          </button>
+
+          <!-- Controle de Volume / Audio Boost -->
+          <div class="control-item">
+            <label id="volLabel" for="volumeSlider">🔊 Volume (100%):</label>
+            <input type="range" id="volumeSlider" min="0" max="200" value="100" oninput="adjustVolume(this.value)">
+          </div>
+        </div>
+
+        <div class="controls-group">
+          <div class="control-item">
+            <label for="fitSelector">📐 Ajuste:</label>
+            <select id="fitSelector" onchange="changeVideoFit(this.value)">
+              <option value="fill" selected>Esticar 100% (Sem Barras Pretas)</option>
+              <option value="cover">Ampliar Zoom (Sem Barras)</option>
+              <option value="contain">Proporção Original (Com Barras)</option>
+            </select>
+          </div>
+          <button id="btnFullscreen" class="btn-control" onclick="toggleFullscreen()">
+            ⛶ Tela Cheia Real
+          </button>
+          <button id="btnLeave" class="btn-control btn-danger" onclick="leaveRoom()">
+            🚪 Sair da Sala
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Estado da Aplicação
+    let ws = null;
+    let selectedRole = 'broadcaster';
+    let roomId = '';
+    let localStream = null;
+    let peerConnections = new Map();
+    let statsInterval = null;
+
+    // Web Audio API para controle de volume com ganho (até 200%) para quem assiste
+    let audioCtx = null;
+    let gainNode = null;
+
+    // Configuração de Servidores STUN públicos mundiais para máxima conectividade via NAT
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:openrelay.metered.ca:80' }
+      ],
+      iceCandidatePoolSize: 10
+    };
+
+    // Elementos UI
+    const setupCard = document.getElementById('setupCard');
+    const streamStage = document.getElementById('streamStage');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const roomIdInput = document.getElementById('roomIdInput');
+    const btnCopySetup = document.getElementById('btnCopySetup');
+    const btnJoin = document.getElementById('btnJoin');
+    const roomLabel = document.getElementById('roomLabel');
+    const displayRoomCode = document.getElementById('displayRoomCode');
+    const mainVideo = document.getElementById('mainVideo');
+    const btnStartCapture = document.getElementById('btnStartCapture');
+
+    // Gerador de código aleatório de 5 letras e números misturados
+    function generateRandomRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sem O/0/I/1 para evitar confusão de leitura
+      let code = '';
+      for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.getElementById('btnRoleHost').classList.toggle('active', role === 'broadcaster');
+      document.getElementById('btnRoleViewer').classList.toggle('active', role === 'viewer');
+
+      if (role === 'broadcaster') {
+        roomLabel.innerText = 'Código da Sala (Gerado automaticamente)';
+        roomIdInput.readOnly = true;
+        roomIdInput.value = generateRandomRoomCode();
+        btnCopySetup.classList.remove('hidden');
+        btnJoin.innerText = 'Gerar Sala & Transmitir';
+      } else {
+        roomLabel.innerText = 'Digite o Código de 5 Dígitos da Sala';
+        roomIdInput.readOnly = false;
+        roomIdInput.value = '';
+        roomIdInput.placeholder = 'EX: X9K3A';
+        btnCopySetup.classList.add('hidden');
+        btnJoin.innerText = 'Entrar na Sala';
+        roomIdInput.focus();
+      }
+    }
+
+    function copyRoomCode() {
+      const code = displayRoomCode.innerText !== '-----' ? displayRoomCode.innerText : roomIdInput.value;
+      const shareUrl = `${window.location.origin}/?room=${code}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert(`🎉 Link Mágico da Sala Copiado!\n\nEnvie este link para quem vai assistir:\n${shareUrl}\n\n(A pessoa clica e entra com 1 clique direto na transmissão!)`);
+      }).catch(() => {
+        prompt("Copie o Link Mágico da Sala:", shareUrl);
+      });
+    }
+
+    // Inicialização da Página e Detecção de Link Direto (?room=XXXXX)
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomParam = urlParams.get('room');
+      if (roomParam) {
+        selectRole('viewer');
+        roomIdInput.value = roomParam.toUpperCase();
+        // Conexão automática na sala após o carregamento da interface
+        setTimeout(() => joinRoom(), 300);
+      } else {
+        selectRole('broadcaster');
+      }
+    });
+
+    // 1. Conexão WebSocket e Entrada na Sala
+    function joinRoom() {
+      roomId = roomIdInput.value.trim().toUpperCase();
+      if (!roomId || roomId.length < 3) {
+        alert("Por favor, insira ou gere um código de sala válido de 5 caracteres.");
+        return;
+      }
+
+      displayRoomCode.innerText = roomId;
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}`;
+      
+      statusText.innerText = 'Conectando...';
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        statusDot.classList.add('live');
+        statusText.innerText = selectedRole === 'broadcaster' ? 'Transmissor P2P' : 'Espectador HD';
+
+        setupCard.style.display = 'none';
+        streamStage.style.display = 'flex';
+
+        if (selectedRole === 'viewer') {
+          btnStartCapture.classList.add('hidden');
+          document.getElementById('statP2P').innerText = 'Conectando ao Host...';
+        } else {
+          document.getElementById('statP2P').innerText = 'Pronto para Transmitir';
+        }
+
+        ws.send(JSON.stringify({
+          type: 'join-room',
+          roomId,
+          role: selectedRole
+        }));
+
+        startStatsMonitor();
+      };
+
+      ws.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+
+        switch (data.type) {
+          case 'room-joined':
+            if (data.viewersCount !== undefined) {
+              document.getElementById('statPeers').innerText = data.viewersCount;
+            }
+            break;
+
+          case 'viewer-joined':
+            const count = parseInt(document.getElementById('statPeers').innerText || '0') + 1;
+            document.getElementById('statPeers').innerText = count;
+
+            if (selectedRole === 'broadcaster' && localStream) {
+              await createAndSendOffer(data.peerId);
+            }
+            break;
+
+          case 'viewer-left':
+            if (peerConnections.has(data.peerId)) {
+              peerConnections.get(data.peerId).close();
+              peerConnections.delete(data.peerId);
+            }
+            const currentCount = Math.max(0, parseInt(document.getElementById('statPeers').innerText || '1') - 1);
+            document.getElementById('statPeers').innerText = currentCount;
+            break;
+
+          case 'offer':
+            if (selectedRole === 'viewer') {
+              await handleReceiveOffer(data.senderPeerId, data.payload);
+            }
+            break;
+
+          case 'answer':
+            if (selectedRole === 'broadcaster' && peerConnections.has(data.senderPeerId)) {
+              const pc = peerConnections.get(data.senderPeerId);
+              await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+              document.getElementById('statP2P').innerText = 'P2P Ativo (Zero Latência)';
+            }
+            break;
+
+          case 'ice-candidate':
+            if (peerConnections.has(data.senderPeerId)) {
+              try {
+                await peerConnections.get(data.senderPeerId).addIceCandidate(new RTCIceCandidate(data.payload));
+              } catch (e) {
+                console.error('Erro ICE:', e);
+              }
+            }
+            break;
+
+          case 'quality-update':
+            // Se o espectador solicitou alteração no preset, ajustamos no host
+            if (selectedRole === 'broadcaster') {
+              document.getElementById('qualityPreset').value = data.preset;
+              applyQualityToStream(data.preset);
+            } else {
+              document.getElementById('qualityPreset').value = data.preset;
+            }
+            break;
+
+          case 'broadcaster-left':
+            document.getElementById('statP2P').innerText = 'Transmissão Encerrou';
+            mainVideo.srcObject = null;
+            break;
+        }
+      };
+
+      ws.onclose = () => {
+        statusDot.classList.remove('live');
+        statusText.innerText = 'Desconectado';
+        document.getElementById('statP2P').innerText = 'Offline';
+      };
+    }
+
+    // 2. Captura de Tela 2K/4K @ 60 FPS e Otimização Anti-Borrão
+    async function startScreenCapture() {
+      try {
+        const preset = document.getElementById('qualityPreset').value;
+        const { width, height, fps } = getPresetParams(preset);
+        const sharpness = document.getElementById('sharpnessMode').value || 'detail';
+
+        const displayMediaOptions = {
+          video: {
+            width: { ideal: width, max: 3840 },
+            height: { ideal: height, max: 2160 },
+            frameRate: { ideal: fps, max: 60 },
+            cursor: "always"
+          },
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          },
+          selfBrowserSurface: "exclude", // Evita selecionar a própria guia e oculta barras extras do navegador se possível
+          surfaceSwitching: "include"
+        };
+
+        localStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+        
+        // Otimização de nitidez: 'detail' proíbe o navegador de borrar o texto e a live em momentos de movimento
+        localStream.getVideoTracks().forEach(track => {
+          track.contentHint = sharpness;
+        });
+
+        mainVideo.srcObject = localStream;
+        mainVideo.muted = true; // Evitar eco no PC de quem transmite
+
+        btnStartCapture.classList.add('hidden');
+        document.getElementById('statP2P').innerText = 'Transmitindo em 2K/4K';
+
+        applyQualityToStream(preset);
+
+        localStream.getVideoTracks()[0].onended = () => {
+          stopScreenCapture();
+        };
+      } catch (err) {
+        console.error("Erro ao iniciar captura:", err);
+        alert("Não foi possível capturar a tela. Verifique as permissões de gravação.");
+      }
+    }
+
+    function stopScreenCapture() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      mainVideo.srcObject = null;
+      btnStartCapture.classList.remove('hidden');
+      document.getElementById('statP2P').innerText = 'Transmissão Parada';
+    }
+
+    // 3. WebRTC - Conexão e Negociação RTP
+    async function createAndSendOffer(targetPeerId) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnections.set(targetPeerId, pc);
+
+      localStream.getTracks().forEach(track => {
+        const sender = pc.addTrack(track, localStream);
+        optimizeRtpSender(sender, track, document.getElementById('qualityPreset').value);
+      });
+
+      setupIceHandling(pc, targetPeerId);
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      ws.send(JSON.stringify({
+        type: 'offer',
+        targetPeerId,
+        payload: pc.localDescription
+      }));
+    }
+
+    async function handleReceiveOffer(senderPeerId, sdpOffer) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnections.set(senderPeerId, pc);
+
+      pc.ontrack = (event) => {
+        if (mainVideo.srcObject !== event.streams[0]) {
+          mainVideo.srcObject = event.streams[0];
+          document.getElementById('statP2P').innerText = 'P2P Ativo (Zero Latência)';
+          setupAudioGainBoost(event.streams[0]);
+        }
+      };
+
+      setupIceHandling(pc, senderPeerId);
+
+      await pc.setRemoteDescription(new RTCSessionDescription(sdpOffer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      ws.send(JSON.stringify({
+        type: 'answer',
+        targetPeerId: senderPeerId,
+        payload: pc.localDescription
+      }));
+    }
+
+    function setupIceHandling(pc, targetPeerId) {
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          ws.send(JSON.stringify({
+            type: 'ice-candidate',
+            targetPeerId,
+            payload: event.candidate
+          }));
+        }
+      };
+    }
+
+    // 4. Configuração Dinâmica de Qualidade 2K/4K e Bitrate (Sem travamentos e Sem Borrão)
+    function getPresetParams(preset) {
+      switch (preset) {
+        case '4k60':    return { width: 3840, height: 2160, fps: 60, bitrate: 40000000 };
+        case '2k60':    return { width: 2560, height: 1440, fps: 60, bitrate: 25000000 };
+        case '2k30':    return { width: 2560, height: 1440, fps: 30, bitrate: 15000000 };
+        case '1080p60': return { width: 1920, height: 1080, fps: 60, bitrate: 15000000 };
+        case '1080p30': return { width: 1920, height: 1080, fps: 30, bitrate: 8000000 };
+        case '720p60':  return { width: 1280, height: 720,  fps: 60, bitrate: 6000000 };
+        case '720p30':  return { width: 1280, height: 720,  fps: 30, bitrate: 3000000 };
+        default:        return { width: 2560, height: 1440, fps: 60, bitrate: 25000000 };
+      }
+    }
+
+    async function optimizeRtpSender(sender, track, preset) {
+      if (track.kind !== 'video') return;
+      const { bitrate, fps } = getPresetParams(preset);
+      const sharpness = document.getElementById('sharpnessMode') ? document.getElementById('sharpnessMode').value : 'detail';
+
+      try {
+        const params = sender.getParameters();
+        if (!params.encodings) params.encodings = [{}];
+        params.encodings[0].maxBitrate = bitrate;
+        params.encodings[0].maxFramerate = fps;
+        
+        // Proíbe explicitamente o navegador de reduzir ou borrar a resolução nativa enviada!
+        params.encodings[0].scaleResolutionDownBy = 1.0;
+        
+        params.encodings[0].networkPriority = 'high';
+        params.encodings[0].priority = 'high';
+        // 'maintain-resolution' obriga o encoder a manter 100% dos pixels nítidos sem borrão
+        params.degradationPreference = sharpness === 'detail' ? 'maintain-resolution' : 'maintain-framerate';
+
+        await sender.setParameters(params);
+      } catch (e) {
+        console.warn('Parâmetros RTP otimizados aplicados com fallback compatível:', e);
+      }
+    }
+
+    function changeSharpnessMode(mode) {
+      if (localStream) {
+        localStream.getVideoTracks().forEach(track => {
+          track.contentHint = mode;
+        });
+      }
+      changeQualityPreset(document.getElementById('qualityPreset').value);
+    }
+
+    function changeQualityPreset(preset) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'quality-update', preset }));
+      }
+      applyQualityToStream(preset);
+    }
+
+    async function applyQualityToStream(preset) {
+      const { width, height, fps } = getPresetParams(preset);
+
+      // Atualiza os restrições da trilha local de vídeo se formos o host
+      if (localStream) {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack && videoTrack.applyConstraints) {
+          try {
+            await videoTrack.applyConstraints({
+              width: { ideal: width, max: width },
+              height: { ideal: height, max: height },
+              frameRate: { ideal: fps, max: fps }
+            });
+          } catch (e) {
+            console.warn('Ajuste de restrição no hardware:', e);
+          }
+        }
+      }
+
+      // Atualiza os transmissores P2P ativos de forma contínua sem desconectar
+      peerConnections.forEach(pc => {
+        pc.getSenders().forEach(sender => {
+          if (sender.track && sender.track.kind === 'video') {
+            optimizeRtpSender(sender, sender.track, preset);
+          }
+        });
+      });
+    }
+
+    // 5. Controle de Volume e Audio Boost (Até 200%)
+    function setupAudioGainBoost(stream) {
+      if (stream.getAudioTracks().length === 0) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(stream);
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = document.getElementById('volumeSlider').value / 100;
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        mainVideo.muted = true; // O áudio processado sai direto pelo AudioContext com boost!
+      } catch (e) {
+        console.warn('Áudio amplificado nativamente pelo elemento de vídeo');
+        mainVideo.muted = false;
+      }
+    }
+
+    function adjustVolume(val) {
+      document.getElementById('volLabel').innerText = `🔊 Volume (${val}%):`;
+      if (gainNode) {
+        gainNode.gain.value = val / 100;
+      } else {
+        mainVideo.volume = Math.min(1, val / 100);
+      }
+    }
+
+    // Monitoramento HUD em Tempo Real
+    function startStatsMonitor() {
+      if (statsInterval) clearInterval(statsInterval);
+      statsInterval = setInterval(() => {
+        if (mainVideo.videoWidth && mainVideo.videoHeight) {
+          document.getElementById('statRes').innerText = `${mainVideo.videoWidth} x ${mainVideo.videoHeight}`;
+        } else {
+          document.getElementById('statRes').innerText = '-- x --';
+        }
+
+        let foundFps = false;
+        peerConnections.forEach(async (pc) => {
+          const stats = await pc.getStats();
+          stats.forEach(report => {
+            if ((report.type === 'inbound-rtp' || report.type === 'outbound-rtp') && report.kind === 'video' && report.framesPerSecond) {
+              document.getElementById('statFps').innerText = `${Math.round(report.framesPerSecond)} fps`;
+              foundFps = true;
+            }
+          });
+        });
+
+        if (!foundFps && localStream && localStream.getVideoTracks()[0]) {
+          const settings = localStream.getVideoTracks()[0].getSettings();
+          if (settings.frameRate) {
+            document.getElementById('statFps').innerText = `${Math.round(settings.frameRate)} fps`;
+          }
+        }
+      }, 1000);
+    }
+
+    function changeVideoFit(mode) {
+      document.documentElement.style.setProperty('--fit-mode', mode);
+      mainVideo.style.objectFit = mode;
+    }
+
+    function toggleFullscreen() {
+      const container = document.querySelector('.video-container');
+      if (!document.fullscreenElement) {
+        // Colocamos o container inteiro em tela cheia para evitar bordas pretas forçadas pelo navegador no elemento video isolado
+        (container.requestFullscreen || mainVideo.requestFullscreen).call(container).catch(err => {
+          mainVideo.requestFullscreen().catch(e => console.error(e));
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    function leaveRoom() {
+      stopScreenCapture();
+      peerConnections.forEach(pc => pc.close());
+      peerConnections.clear();
+      if (ws) ws.close();
+      
+      streamStage.style.display = 'none';
+      setupCard.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

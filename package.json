@@ -1,0 +1,22 @@
+{
+  "name": "nitro-share-p2p",
+  "version": "1.0.0",
+  "description": "Sistema privado de transmissão de tela em alta definição (1080p@60FPS) via WebRTC P2P e WebSockets.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "webrtc",
+    "websocket",
+    "screen-share",
+    "p2p",
+    "1080p60"
+  ],
+  "author": "Senior WebRTC Engineer",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

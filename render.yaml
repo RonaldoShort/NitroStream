@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: nitro-share-p2p
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
